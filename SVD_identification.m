@@ -14,7 +14,7 @@ sample = 0.1; %サンプリング周波数
 num = [1];              %伝達関数分子
 den = [1 3];            %伝達関数分母
 cP = tf(num,den);
-dP = c2d(cP,sample);
+dP = c2d(cP,sample,'tustin');
 
 [vec,t] = impulse(dP,5);
 
@@ -91,7 +91,11 @@ hold on;
 stem(t,vec);
 stem(t,vec2);
 
-
+set(gca,'FontName','arial','FontSize',14)
+xlabel('time [s]','FontName','arial','FontSize',16)
+ylabel('out','FontName','arial','FontSize',16)
+legend('true','estimate')
+set(legend,'FontName','arial','FontSize',14)
 
 
 
