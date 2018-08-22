@@ -1,5 +1,5 @@
 %==========================================================================
-% ◎ ドローンシステム
+% ◎ ドローンシミュレーション
 %==========================================================================
 close all;
 clear;
@@ -20,7 +20,15 @@ for i = 1:numel(v_syms)
   B = subs(B, v_syms(i), v_vals(i));
   D = subs(D, v_syms(i), v_vals(i));
 end
+clear Ix Iy Iz m g;
+Ix = v_vals(1);
+Iy = v_vals(2);
+Iz = v_vals(3);
+m = v_vals(4);
+g = v_vals(5);
 
 A_val = double(A);
 B_val = double(B);
 D_val = double(D);
+
+sim('block_nonlinear')
