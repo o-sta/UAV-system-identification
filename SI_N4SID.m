@@ -65,7 +65,6 @@ Up = hankel(tmp1,tmp2);
 tmp1 = y(1:k);
 tmp2 = y(k:end-k);
 Yp = hankel(tmp1,tmp2);
-Wp = [Up; Yp];
 % 未来の入力
 tmp1 = u(k+1:2*k);
 tmp2 = u(2*k:end);
@@ -73,12 +72,12 @@ Uf = hankel(tmp1,tmp2);
 tmp1 = y(k+1:2*k);
 tmp2 = y(2*k:end);
 Yf = hankel(tmp1,tmp2);
-Wf = [Uf; Yf];
 
 %--------------------------------------------------------------------------
 % ● LQ分解
 %--------------------------------------------------------------------------
 clear tmp1 tmp2;
+Wp = [Up; Yp];
 tmp1 = [Uf; Wp; Yf]; % [Uf; Up; Yp; Yf];でも可
 [Q, L] = qr(tmp1', 0);
 Q = Q';

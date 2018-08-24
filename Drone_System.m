@@ -105,7 +105,7 @@ cP = tf(num,den);
 m = 1;      %入力の数
 p = 1;      %出力の数
 sample = 1; %サンプリング周波数
-n = 4;      %状態変数の次数
+n = 12;      %状態変数の次数
 k = 1000;      %データ行列の行数
 
 % フィボナッチ数列
@@ -127,27 +127,39 @@ k = 1000;      %データ行列の行数
 % ● 入力と出力のデータ行列生成
 % k : データ行列の行数
 %--------------------------------------------------------------------------
-
 clear A B C D;
-tmp1 = Ldata.data(1:k,14);
-tmp2 = Ldata.data(k:end,14);
-U = hankel(tmp1,tmp2);
-tmp1 = Ldata.data(1:k,7);
-tmp2 = Ldata.data(k:end,7);
-Y = hankel(tmp1,tmp2);
+%MOESP
+% [A, B, C, D] = mf_moesp(Ldata.data(:,14)', Ldata.data(:,7)', k, n);
+[A, B, C, D] = mf_moesp(data.data(:,14)', data.data(:,7)', k, n);
 
-[A, B, C, D] = mf_moesp(U, Y, m, p, n);
-
+%N4SID
+% [A, B, C, D] = mf_n4sid(Ldata.data(:,14)', Ldata.data(:,7)', k/2, n);
 
 %--------------------------------------------------------------------------
 % ● 伝達関数の算出
 %--------------------------------------------------------------------------
-[num den] = ss2tf(A,B,C,D);
+[num, den] = ss2tf(A,B,C,D);
 dP_est = tf(num,den,0.001);
 
-%dP
+%データのプロット
 dP_est
 cP_est = d2c(dP_est,'zoh');
 [y,t] = lsim(cP_est, u_data, t_data);
 figure(1)
 plot(t,y/(2*pi)*360);
+
+%FIT算出
+clear num den;
+[num, den] = tfdata(cP_est);
+sim('block_nonlinear_compare',s_t);
+
+clear y yh ya;
+y = Cdata.data(:, 7);
+yh = Cdata.data(:, 23);
+ya = mean(Cdata.data(:, 7));
+
+fit = (1 - (sqrt(sum((y-yh).^2)))/(sqrt(sum((y-ya).^2))) )*100;
+
+
+
+
