@@ -118,7 +118,7 @@ L21 = L(km+1:km+kp, 1:km);
 L22 = L(km+1:km+kp, km+1:km+kp);
 
 %--------------------------------------------------------------------------
-% ● SVD
+% ● SVD (sU*sS*sV' = L22)
 % n : 状態変数の次数
 %--------------------------------------------------------------------------
 [sU, sS, sV] = svd(L22);
@@ -138,21 +138,32 @@ Ok = sU1 * sqrt(sS1);
 C = Ok(1:p, 1:n);
 A = Ok(1:kp-p,:)\Ok(p+1:kp,:);
 
+
 mat_l1 = []; %左側行列 1列目
-mat_r = []; %右側行列
+mat_r = zeros((kp-n)*k, m); %右側行列 行と列のみ指定して、成分は0で埋める
 mat_M = sU2' * L21 * L11^(-1);
+sU2T = sU2';
+
+
 for i = 1:k
 %     Li(i).m = sU2(1+(i-1)*p:p+(i-1)*p,:)';
 %     Li_(i).m = sU2(1+(i-1)*p:end,:)';
-    Li_Ok(i).m = sU2(1+(i-1)*p:end,:)'*Ok(1:k-i+1);
-    mat_l1 = [mat_l1; sU2(1+(i-1)*p:p+(i-1)*p,:)'];
-    mat_r = [mat_r; mat_M(:,m*(i-1)+1:m*i)];
+%     Li_Ok(i).m = sU2(1+(i-1)*p:end,:)'*Ok(1:k-i+1);
+    Li_Ok(i).m = sU2T(:, p*i+1:end)*Ok(1:p*(k-i),:);　% 修正
+%     mat_l1 = [mat_l1; sU2(1+(i-1)*p:p+(i-1)*p,:)'];
+    mat_l1 = [mat_l1; sU2T(:, p*(i-1)+1:p*i)]; % 修正
+%     mat_r = [mat_r; mat_M(:,m*(i-1)+1:m*i)];
+    mat_r((kp-n)*(i-1)+1:(kp-n)*(i), 1:m) = mat_M(1:kp-n, m*(i-1)+1:m*i); %行列の再配置
 end
+
+
+
 mat_l2 = [];
-for i = 2:k
+for i = 1:k-1
     mat_l2 = [mat_l2; Li_Ok(i).m];
 end
-mat_l2 = [mat_l2; zeros(size(Li_Ok(1).m))];
+% mat_l2 = [mat_l2; zeros(size(Li_Ok(1).m))];
+mat_l2 = [mat_l2; zeros(kp-n, size(Li_Ok(1).m,2))];
 mat_l = [mat_l1 mat_l2];
 
 mat_res = (mat_l'*mat_l)^(-1)*mat_l'*mat_r;
