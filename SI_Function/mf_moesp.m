@@ -75,7 +75,8 @@ end
 mat_l2 = [mat_l2; zeros(kp-n, size(Li_Ok(1).m,2))];
 mat_l = [mat_l1 mat_l2];
 
-mat_res = (mat_l'*mat_l)^(-1)*mat_l'*mat_r;
+% mat_res = (mat_l'*mat_l)^(-1)*mat_l'*mat_r;
+mat_res = pinv(mat_l)*mat_r;
 D = mat_res(1:p, 1:m);
 B = mat_res(p+1:p+n, 1:m);
 

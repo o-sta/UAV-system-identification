@@ -4,6 +4,7 @@
 %==========================================================================
 close all;
 clear;
+addpath('SI_Function');
 %--------------------------------------------------------------------------
 % ● 状態空間表現の定義
 %--------------------------------------------------------------------------
@@ -80,6 +81,8 @@ u_in = timeseries(u_data, t_data, 'name', 'Position');
 sim('block_nonlinear',s_t)
 sim('block_ss',s_t)
 
+
+
 plot_data
 
 % 伝達関数作成 in tx out phi
@@ -105,7 +108,7 @@ cP = tf(num,den);
 m = 1;      %入力の数
 p = 1;      %出力の数
 sample = 1; %サンプリング周波数
-n = 12;      %状態変数の次数
+n = 2;      %状態変数の次数
 k = 1000;      %データ行列の行数
 
 % フィボナッチ数列
@@ -130,15 +133,17 @@ k = 1000;      %データ行列の行数
 clear A B C D;
 %MOESP
 % [A, B, C, D] = mf_moesp(Ldata.data(:,14)', Ldata.data(:,7)', k, n);
-[A, B, C, D] = mf_moesp(data.data(:,14)', data.data(:,7)', k, n);
+% [A, B, C, D] = mf_moesp(data.data(:,14)', data.data(:,7)', k, n);
+[moA, moB, moC, moD] = mf_moesp(data.data(:,14)', data.data(:,7)', k, n);
 
 %N4SID
 % [A, B, C, D] = mf_n4sid(Ldata.data(:,14)', Ldata.data(:,7)', k/2, n);
+[n4A, n4B, n4C, n4D] = mf_n4sid(data.data(:,14)', data.data(:,7)', k/2, n);
 
 %--------------------------------------------------------------------------
-% ● 伝達関数の算出
+% ● 伝達関数の算出 moesp
 %--------------------------------------------------------------------------
-[num, den] = ss2tf(A,B,C,D);
+[num, den] = ss2tf(moA,moB,moC,moD);
 dP_est = tf(num,den,0.001);
 
 %データのプロット
@@ -146,7 +151,7 @@ dP_est
 cP_est = d2c(dP_est,'zoh');
 [y,t] = lsim(cP_est, u_data, t_data);
 figure(1)
-plot(t,y/(2*pi)*360);
+plot(t,y/(2*pi)*360,'--','LineWidth',2);
 
 %FIT算出
 clear num den;
@@ -158,8 +163,57 @@ y = Cdata.data(:, 7);
 yh = Cdata.data(:, 23);
 ya = mean(Cdata.data(:, 7));
 
-fit = (1 - (sqrt(sum((y-yh).^2)))/(sqrt(sum((y-ya).^2))) )*100;
+mofit = (1 - (sqrt(sum((y-yh).^2)))/(sqrt(sum((y-ya).^2))) )*100;
+
+pdt_mt = Cdata.time;
+pdt_m = Cdata.data(:, 23);
+pdt_true = Cdata.data(:, 7)
 
 
+%--------------------------------------------------------------------------
+% ● 伝達関数の算出 n4sid
+%--------------------------------------------------------------------------
+clear num den;
+[num, den] = ss2tf(n4A,n4B,n4C,n4D);
+dP_est = tf(num,den,0.001);
+
+%データのプロット
+dP_est
+cP_est = d2c(dP_est,'zoh');
+[y,t] = lsim(cP_est, u_data, t_data);
+figure(1)
+plot(t,y/(2*pi)*360,'-.','LineWidth',2);
+
+%FIT算出
+clear num den;
+[num, den] = tfdata(cP_est);
+sim('block_nonlinear_compare',s_t);
+
+clear y yh ya;
+y = Cdata.data(:, 7);
+yh = Cdata.data(:, 23);
+ya = mean(Cdata.data(:, 7));
+
+n4fit = (1 - (sqrt(sum((y-yh).^2)))/(sqrt(sum((y-ya).^2))) )*100;
+
+legend('Simulation','MOESP','N4SID')
+set(legend,'FontName','arial','FontSize',14)
+
+
+pdt_nt = Cdata.time;
+pdt_n = Cdata.data(:, 23);
+
+figure(2)
+% plot(pdt_mt, pdt_true,'LineWidth',2);
+% plot(pdt_mt, pdt_m,'LineWidth',2);
+plot(pdt_nt, pdt_n,'LineWidth',2);
+
+
+legend('True','moesp','n4sid')
+set(legend,'FontName','arial','FontSize',16)
+
+
+mofit
+n4fit
 
 
