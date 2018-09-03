@@ -11,23 +11,45 @@ function [A, B, C, D] = mf_n4sid(u, y, k, n)
 % SISOに対応。MIMOは非対応。
 
 %--------------------------------------------------------------------------
-% ● 入力と出力のデータ行列生成
-% k : データ行列の行数
+% ● 入力と出力のデータ行列生成（MIMO）
 %--------------------------------------------------------------------------
+% SISOの時のデータ行列
+% % 過去の入力
+% tmp1 = u(:,1:k);
+% tmp2 = u(:,k:end-k);
+% Up = hankel(tmp1,tmp2);
+% tmp1 = y(:,1:k);
+% tmp2 = y(:,k:end-k);
+% Yp = hankel(tmp1,tmp2);
+% % 未来の入力
+% tmp1 = u(:,k+1:2*k);
+% tmp2 = u(:,2*k:end);
+% Uf = hankel(tmp1,tmp2);
+% tmp1 = y(:,k+1:2*k);
+% tmp2 = y(:,2*k:end);
+% Yf = hankel(tmp1,tmp2);
+
+% MIMOの時のデータ行列（こちらを使う）
+m = size(u,1);      % 入力の次数 uの1行目のサイズ
+p = size(y,1);      % 出力の次数
 % 過去の入力
-tmp1 = u(1:k);
-tmp2 = u(k:end-k);
-Up = hankel(tmp1,tmp2);
-tmp1 = y(1:k);
-tmp2 = y(k:end-k);
-Yp = hankel(tmp1,tmp2);
+Up = zeros(m*k,size(u,2)-2*k + 1);
+for i = 1:k
+    Up(m*(i-1)+1:m*i,:) = u(:,i:size(u,2)-2*k+1 + i-1);
+end
+Yp = zeros(p*k,size(y,2)-2*k+1);
+for i = 1:k
+    Yp(p*(i-1)+1:p*i,:) = y(:,i:size(y,2)-2*k+1 + i-1);
+end
 % 未来の入力
-tmp1 = u(k+1:2*k);
-tmp2 = u(2*k:end);
-Uf = hankel(tmp1,tmp2);
-tmp1 = y(k+1:2*k);
-tmp2 = y(2*k:end);
-Yf = hankel(tmp1,tmp2);
+Uf = zeros(m*k,size(u,2)-2*k+1);
+for i = 1:k
+    Uf(m*(i-1)+1:m*i,:) = u(:,i+k:size(u,2)-2*k+1 + i+k-1);
+end
+Yf = zeros(p*k,size(y,2)-2*k+1);
+for i = 1:k
+    Yf(p*(i-1)+1:p*i,:) = y(:,i+k:size(y,2)-2*k+1 + i+k-1);
+end
 
 %--------------------------------------------------------------------------
 % ● LQ分解
