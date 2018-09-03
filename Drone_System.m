@@ -34,124 +34,73 @@ B_val = double(B);
 D_val = double(D);
 
 %--------------------------------------------------------------------------
-% ● M系列信号生成 v2
+% ● 伝達関数と出力信号の生成
 %--------------------------------------------------------------------------
 % パラメータ
-mP = 5; % M系列のmP段シフトレジスタ
-mk = 2; % 最終段以外にフィードバックさせる信号 (-mk 番目)
+m = 1;          % 入力の数
+p = 1;          % 出力の数
+sample = 1;     % サンプリング周波数
+n = 2;          % 状態変数の次数
+k = 1000;        % データ行列の行数
+ts = 0.001;      % サンプリング時間
 
+%--------------------------------------------------------------------------
+% ● M系列信号生成 v2
+%--------------------------------------------------------------------------
+mP = 5;     % M系列のmP段シフトレジスタ
+mk = 2;     % 最終段以外にフィードバックさせる信号
 
 x = randi([0 1], mP, 1);    % 状態の初期値をランダムに決定
-x = [1 1 1 1 1]';
+x = [0 1 0 0 1]';           % 状態の初期値を指定（全て0は禁止）
 u = zeros(2^mP-1, 1);       % 出力変数の定義
 for i = 1:2^mP-1            % 信号の生成
-    x = [xor(x(mk),x(end));x(1:end-1)]; %フィードバック
+    x = [xor(x(mk),x(end));x(1:end-1)]; % フィードバック
     u(i) = x(1);
 end
-for i = 1:2^mP - 1          % 2値信号の値を0,1から-1,1に変更
+for i = 1:2^mP - 1          % 2値信号の値を0,1から他の値に変更
     if u(i) == 1
         u(i)=0.00001;
     else
         u(i)=-0.00001;
     end
 end
-
-% u_in = timeseries(u, 0:0.4:12, 'name', 'Position');
-
-
-%u_data = zeros(size(t_data));
-
-% 信号全体の時間[s]
-s_t = 5;
-% 離散信号1個あたりの継続時間[s]
-s_tp = 0.001;
-% 1個あたりの連続時間信号数
-s_p = round(s_t/s_tp/numel(u));
-% 時間信号を作成
-t_data(:,1) = 0:s_tp:s_tp*s_p*numel(u)-s_tp;
+s_t = 5;        % 信号全体の時間[s]
+s_tp = 0.001;   % 離散信号1個あたりの継続時間[s] / サンプリング時間
+s_p = round(s_t/s_tp/numel(u));               % 1個あたりの連続時間信号数
+t_data(:,1) = 0:s_tp:s_tp*s_p*numel(u)-s_tp;  % 時間信号を作成
 u_data = zeros(size(t_data));
-% 信号を作成
-for i = 1:numel(u)
+for i = 1:numel(u)  % 信号を作成
     for j = (i-1)*s_p+1:i*s_p
         u_data(j) = u(i);
     end
 end
-u_in = timeseries(u_data, t_data, 'name', 'Position');
-
+u_in = timeseries(u_data, t_data, 'name', 'Position');  % 時系列作成
 sim('block_nonlinear',s_t)
 sim('block_ss',s_t)
 
 
 
-plot_data
-
-% 伝達関数作成 in tx out phi
-clear A B C D;
-A = A_val;
-B = B_val(:,2);
-C = [0 0 0 0 0 0 1 0 0 0 0 0];
-D = [0];
-
-[num,den] = ss2tf(A,B,C,D);
-cP = tf(num,den);
-
-%[y,t] = lsim(cP, u_data, t_data);
-%figure(1);
-%plot(t,y/(2*pi)*360);
-
-
-% 以下MOESP法
-%--------------------------------------------------------------------------
-% ● 伝達関数と出力信号の生成
-%--------------------------------------------------------------------------
-% パラメータ
-m = 1;      %入力の数
-p = 1;      %出力の数
-sample = 1; %サンプリング周波数
-n = 2;      %状態変数の次数
-k = 1000;      %データ行列の行数
-
-% フィボナッチ数列
-% num = [1 0];              %伝達関数分子
-% den = [1 -1 -1];            %伝達関数分母
-% dP = tf(num,den,sample);
-
-% 連続系を離散系に双一次変換したもの
-% num = [1];                  %伝達関数分子
-% den = [1 5];                %伝達関数分母
-% cP = tf(num,den);
-% dP = c2d(cP,sample,'tustin');
-% [y,t] = lsim(dP, u, 0:1:numel(u)-1);
-% stem(t,u)siz
-% hold on
-% stem(t,y)
 
 %--------------------------------------------------------------------------
-% ● 入力と出力のデータ行列生成
-% k : データ行列の行数
+% ● MOESP,N4SID実行
 %--------------------------------------------------------------------------
 clear A B C D;
-%MOESP
-% [A, B, C, D] = mf_moesp(Ldata.data(:,14)', Ldata.data(:,7)', k, n);
-% [A, B, C, D] = mf_moesp(data.data(:,14)', data.data(:,7)', k, n);
-[moA, moB, moC, moD] = mf_moesp(data.data(:,14)', data.data(:,7)', k, n);
-
-%N4SID
-% [A, B, C, D] = mf_n4sid(Ldata.data(:,14)', Ldata.data(:,7)', k/2, n);
-[n4A, n4B, n4C, n4D] = mf_n4sid(data.data(:,14)', data.data(:,7)', k/2, n);
-
+% 連続データ
+% [moA, moB, moC, moD] = mf_moesp(data.data(:,14)', data.data(:,7)', k, n);   %MOESP
+% [n4A, n4B, n4C, n4D] = mf_n4sid(data.data(:,14)', data.data(:,7)', k/2, n); %N4SID
+% 離散データ
+[moA, moB, moC, moD] = mf_moesp(data_D.data(:,14)', data_D.data(:,7)', k, n);   %MOESP
+[n4A, n4B, n4C, n4D] = mf_n4sid(data_D.data(:,14)', data_D.data(:,7)', k/2, n); %N4SID
 %--------------------------------------------------------------------------
 % ● 伝達関数の算出 moesp
 %--------------------------------------------------------------------------
 [num, den] = ss2tf(moA,moB,moC,moD);
-dP_est = tf(num,den,0.001);
+dP_est = tf(num,den,ts);
 
 %データのプロット
 dP_est
 cP_est = d2c(dP_est,'zoh');
-[y,t] = lsim(cP_est, u_data, t_data);
-figure(1)
-plot(t,y/(2*pi)*360,'--','LineWidth',2);
+[mo_y,mo_t] = lsim(cP_est, u_data, t_data);
 
 %FIT算出
 clear num den;
@@ -167,22 +116,20 @@ mofit = (1 - (sqrt(sum((y-yh).^2)))/(sqrt(sum((y-ya).^2))) )*100;
 
 pdt_mt = Cdata.time;
 pdt_m = Cdata.data(:, 23);
-pdt_true = Cdata.data(:, 7)
-
+pdt_true = Cdata.data(:, 7);
 
 %--------------------------------------------------------------------------
 % ● 伝達関数の算出 n4sid
 %--------------------------------------------------------------------------
 clear num den;
 [num, den] = ss2tf(n4A,n4B,n4C,n4D);
-dP_est = tf(num,den,0.001);
+dP_est = tf(num,den,ts);
 
 %データのプロット
 dP_est
 cP_est = d2c(dP_est,'zoh');
-[y,t] = lsim(cP_est, u_data, t_data);
-figure(1)
-plot(t,y/(2*pi)*360,'-.','LineWidth',2);
+[n4_y,n4_t] = lsim(cP_est, u_data, t_data);
+
 
 %FIT算出
 clear num den;
@@ -194,26 +141,12 @@ y = Cdata.data(:, 7);
 yh = Cdata.data(:, 23);
 ya = mean(Cdata.data(:, 7));
 
-n4fit = (1 - (sqrt(sum((y-yh).^2)))/(sqrt(sum((y-ya).^2))) )*100;
-
-legend('Simulation','MOESP','N4SID')
-set(legend,'FontName','arial','FontSize',14)
-
+n4fit = (1 - (sqrt(sum ((y-yh).^2)))/(sqrt(sum((y-ya).^2))) )*100;
 
 pdt_nt = Cdata.time;
 pdt_n = Cdata.data(:, 23);
 
-figure(2)
-% plot(pdt_mt, pdt_true,'LineWidth',2);
-% plot(pdt_mt, pdt_m,'LineWidth',2);
-plot(pdt_nt, pdt_n,'LineWidth',2);
-
-
-legend('True','moesp','n4sid')
-set(legend,'FontName','arial','FontSize',16)
-
-
 mofit
 n4fit
 
-
+plot_data
