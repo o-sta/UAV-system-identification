@@ -32,6 +32,8 @@ function [A, B, C, D] = mf_n4sid(u, y, k, n)
 % MIMOの時のデータ行列（こちらを使う）
 m = size(u,1);      % 入力の次数 uの1行目のサイズ
 p = size(y,1);      % 出力の次数
+km = k*m
+kp = k*p
 % 過去の入力
 Up = zeros(m*k,size(u,2)-2*k + 1);
 for i = 1:k
@@ -50,6 +52,9 @@ Yf = zeros(p*k,size(y,2)-2*k+1);
 for i = 1:k
     Yf(p*(i-1)+1:p*i,:) = y(:,i+k:size(y,2)-2*k+1 + i+k-1);
 end
+N = size(Up,2);
+
+
 
 %--------------------------------------------------------------------------
 % ● LQ分解
@@ -61,15 +66,27 @@ tmp1 = [Uf; Wp; Yf]; % [Uf; Up; Yp; Yf];でも可
 Q = Q';
 L = L';
 com_st = L(1,1); %component_standard : 基準要素
-for i = k+1:min(size(L))
-    if abs(L(i,i)) < abs(com_st * 10^(-4))
+% for i = k+1:min(size(L))
+%     if abs(L(i,i)) < abs(com_st * 10^(-4))
+%         break;
+%     end
+% end
+% L22 = L(k+1:3*k, k+1:i-1);
+% L32 = L(3*k+1:end, k+1:i-1);
+% size(L22)
+% size(L32)
+
+for i = km+1 : N
+    if L(km+1 : 2*km+kp, i) < abs(com_st * 10^(-5))
+        r = i-1;
         break;
     end
 end
-L22 = L(k+1:3*k, k+1:i-1);
-L32 = L(3*k+1:end, k+1:i-1);
-
-
+L22 = L(km+1 : 2*km+kp, km+1 : km+r);
+L32 = L(2*km+kp+1 : 2*km+2*kp, km+1 : km+r);
+size(L22)
+size(L32)
+       
 
 % Th = L32 * (L22'*L22)^(-1)*L22' * Wp;
 Th = L32 * pinv(L22) * Wp;
@@ -80,7 +97,7 @@ Th = L32 * pinv(L22) * Wp;
 %--------------------------------------------------------------------------
 [sU, sS, sV] = svd(Th);
 sU1 = sU(:, 1:n);
-sS1 = sS(1:n, 1:n);
+sS1 = sS(1:n, 1:n)
 sV1 = sV(:, 1:n);  % 転置であることに注意
 % sU2 = sU(:, n+1:end);
 % sS2 = sS(n+1:end, n+1:end);
@@ -99,8 +116,8 @@ Xk = (Ok'*Ok)^(-1)*Ok' * Th;
 %--------------------------------------------------------------------------
 % ● A,B,C,D の算出
 %--------------------------------------------------------------------------
-XY = [Xk(:, 2:end); y(k+1:end-k)]; % [Xk+1; Yk]
-XU = [Xk(:, 1:end-1); u(k+1:end-k)]; % [Xk; Uk]
+XY = [Xk(:, 2:end); y(:, k+1:end-k)]; % [Xk+1; Yk]
+XU = [Xk(:, 1:end-1); u(:, k+1:end-k)]; % [Xk; Uk]
 res = (XY*XU')*(XU*XU')^(-1);
 A = res(1:n, 1:n);
 B = res(1:n, 1+n:end);
