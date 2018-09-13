@@ -18,11 +18,21 @@ B = [0;
     bc;
     -mp*lp*bc/tmp];
 C = [1 0 0 0;
-    0 1 0 0];
+    0 1 0 0;
+    0 0 1 0;
+    0 0 0 1];
 D = [0;
+    0;
+    0;
     0];
 clear tmp;
 
+%--------------------------------------------------------------------------
+% ● 最適レギュレータによるゲイン設定
+%--------------------------------------------------------------------------
+Q = diag([500 2000 1 1]);
+R = 30;
+K = lqr(A,B,Q,R);
 
 %--------------------------------------------------------------------------
 % ● 伝達関数と出力信号の生成
@@ -32,10 +42,8 @@ m = 1;          % 入力の数
 p = 2;          % 出力の数
 sample = 1;     % サンプリング周波数
 n = 4;          % 状態変数の次数
-k = 50;        % データ行列の行数
-ts = 0.02;      % サンプリング時間
-
-
+k = 100;        % データ行列の行数
+ts = 0.001;      % サンプリング時間
 
 %--------------------------------------------------------------------------
 % ● M系列信号生成
@@ -68,87 +76,83 @@ for i = 1:numel(u)  % 信号を作成
     end
 end
 u_in = timeseries(u_data, t_data, 'name', 'Position');  % 時系列作成
-sim('block_pen_linear',s_t);
+sim('block/pen_linear_close',s_t);
 
 %--------------------------------------------------------------------------
-% ● MOESP,N4SID実行
+% ● CL-MOESP実行
 %--------------------------------------------------------------------------
-input_data = data_D.data(:, 3)';
-output_data = data_D.data(:,1:2)';
+reference_data = data_D.data(:,1)';
+input_data = data_D.data(:, 2)';
+output_data = data_D.data(:,3:6)';
 
-% 連続データ
-% [moA, moB, moC, moD] = mf_moesp(data.data(:,14)', data.data(:,7)', k, n);   %MOESP
-% [n4A, n4B, n4C, n4D] = mf_n4sid(data.data(:,14)', data.data(:,7)', k/2, n); %N4SID
-% 離散データ
-[moA, moB, moC, moD] = mf_moesp(input_data, output_data, k, n);   %MOESP
-[n4A, n4B, n4C, n4D] = mf_n4sid(input_data, output_data, k/2, n); %N4SID
+[clA, clB, clC, clD] = mf_clmoesp(reference_data, input_data, output_data, k, n);
 
 %--------------------------------------------------------------------------
-% ● 同定結果の比較
+% ● 同定結果の比較 CL-MOESP
 %--------------------------------------------------------------------------
-dP_est = ss(moA, moB, moC, moD, ts);
-% dP_est = ss(n4A, n4B, n4C, n4D, ts);
-cP_est = d2c(dP_est, 'zoh');
-[coA, coB, coC, coD] = ssdata(cP_est);
-sim('block_pen_linear_compare',s_t);
+dP_est_clmoesp = ss(clA, clB, clC, clD, ts);
+cP_est_clmoesp = d2c(dP_est_clmoesp, 'zoh');
+[coA, coB, coC, coD] = ssdata(cP_est_clmoesp);
+sim('block/pen_linear_close_compare',s_t);
 
-% %--------------------------------------------------------------------------
-% % ● 状態空間表現の算出 moesp
-% %--------------------------------------------------------------------------
-% [num, den] = ss2tf(moA,moB,moC,moD);
-% dP_est = tf(num,den,ts);
-% 
-% %データのプロット
-% dP_est
-% cP_est = d2c(dP_est,'zoh');
-% [mo_y,mo_t] = lsim(cP_est, u_data, t_data);
-% 
-% %FIT算出
-% clear num den;
-% [num, den] = tfdata(cP_est);
-% sim('block_nonlinear_compare',s_t);
-% 
-% clear y yh ya;
-% y = Cdata.data(:, 7);
-% yh = Cdata.data(:, 23);
-% ya = mean(Cdata.data(:, 7));
-% 
-% mofit = (1 - (sqrt(sum((y-yh).^2)))/(sqrt(sum((y-ya).^2))) )*100;
-% 
-% pdt_mt = Cdata.time;
-% pdt_m = Cdata.data(:, 23);
-% pdt_true = Cdata.data(:, 7);
-% 
-% %--------------------------------------------------------------------------
-% % ● 伝達関数の算出 n4sid
-% %--------------------------------------------------------------------------
-% clear num den;
-% [num, den] = ss2tf(n4A,n4B,n4C,n4D);
-% dP_est = tf(num,den,ts);
-% 
-% %データのプロット
-% dP_est
-% cP_est = d2c(dP_est,'zoh');
-% [n4_y,n4_t] = lsim(cP_est, u_data, t_data);
-% 
-% 
-% %FIT算出
-% clear num den;
-% [num, den] = tfdata(cP_est);
-% sim('block_nonlinear_compare',s_t);
-% 
-% clear y yh ya;
-% y = Cdata.data(:, 7);
-% yh = Cdata.data(:, 23);
-% ya = mean(Cdata.data(:, 7));
-% 
-% n4fit = (1 - (sqrt(sum ((y-yh).^2)))/(sqrt(sum((y-ya).^2))) )*100;
-% 
-% pdt_nt = Cdata.time;
-% pdt_n = Cdata.data(:, 23);
-% 
-% mofit
-% n4fit
-% 
-% plot_data
-% 
+cl_t = Cdata.time;                         % 時間
+cl_ref = Cdata.data(:,1);                  % 目標値
+cl_int = Cdata.data(:,2);                  % 入力 真値
+cl_ini = Cdata.data(:,7);                  % 入力 同定
+cl_out1t = Cdata.data(:,3);                % 出力1 真値
+cl_out2t = Cdata.data(:,4)/(2*pi)*360;     % 出力2 真値
+cl_out1i = Cdata.data(:,8);                % 出力1 同定
+cl_out2i = Cdata.data(:,9)/(2*pi)*360;     % 出力2 同定
+
+clfit1 = mf_fit(cl_out1i,cl_out1t)
+clfit2 = mf_fit(cl_out2i,cl_out2t)
+
+%--------------------------------------------------------------------------
+% ● データのプロット
+%--------------------------------------------------------------------------
+% 目標値信号と自己相関関数(PE性確認のため)
+fig1 = figure(1);
+movegui('northwest')
+subplot(2,1,1);
+hold on
+plot(cl_t,cl_ref,'LineWidth',2);
+set(gca,'FontName','arial','FontSize',14)
+xlabel('time [s]','FontName','arial','FontSize',16)
+ylabel('reference','FontName','arial','FontSize',16)
+subplot(2,1,2);
+hold on
+stem(xcorr(u))
+set(gca,'FontName','arial','FontSize',14)
+xlabel('lag','FontName','arial','FontSize',16)
+ylabel('value','FontName','arial','FontSize',16)
+
+% MOESP法の結果(2出力)
+fig2 = figure(2);
+iptwindowalign(fig1,'right',fig2,'left');
+subplot(3,1,1);
+hold on
+plot(cl_t,cl_int,'LineWidth',2);
+plot(cl_t,cl_ini,'--','LineWidth',2);
+set(gca,'FontName','arial','FontSize',14)
+xlabel('time [s]','FontName','arial','FontSize',16)
+ylabel('voltage [V]','FontName','arial','FontSize',16)
+legend('True','CL-MOESP')
+set(legend,'FontName','arial','FontSize',16,'Location','southeast')
+subplot(3,1,2);
+hold on
+plot(cl_t,cl_out1t,'LineWidth',2);
+plot(cl_t,cl_out1i,'--','LineWidth',2);
+set(gca,'FontName','arial','FontSize',14)
+xlabel('time [s]','FontName','arial','FontSize',16)
+ylabel('location [m]','FontName','arial','FontSize',16)
+legend('True','CL-MOESP')
+set(legend,'FontName','arial','FontSize',16,'Location','southeast')
+subplot(3,1,3);
+hold on
+plot(cl_t,cl_out2t,'LineWidth',2);
+plot(cl_t,cl_out2i,'--','LineWidth',2);
+set(gca,'FontName','arial','FontSize',14)
+xlabel('time [s]','FontName','arial','FontSize',16)
+ylabel('angular [deg]','FontName','arial','FontSize',16)
+legend('True','CL-MOESP')
+set(legend,'FontName','arial','FontSize',16,'Location','southeast')
