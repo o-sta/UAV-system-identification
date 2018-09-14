@@ -140,7 +140,7 @@ plot(mo_t,mo_out1t,'LineWidth',2);
 plot(mo_t,mo_out1i,'--','LineWidth',2);
 set(gca,'FontName','arial','FontSize',14)
 xlabel('time [s]','FontName','arial','FontSize',16)
-ylabel('location [V]','FontName','arial','FontSize',16)
+ylabel('location [m]','FontName','arial','FontSize',16)
 legend('True','MOESP')
 set(legend,'FontName','arial','FontSize',16,'Location','southeast')
 subplot(2,1,2);
@@ -162,7 +162,7 @@ plot(n4_t,n4_out1t,'LineWidth',2);
 plot(n4_t,n4_out1i,'--','LineWidth',2);
 set(gca,'FontName','arial','FontSize',14)
 xlabel('time [s]','FontName','arial','FontSize',16)
-ylabel('location [V]','FontName','arial','FontSize',16)
+ylabel('location [m]','FontName','arial','FontSize',16)
 legend('True','N4SID')
 set(legend,'FontName','arial','FontSize',16,'Location','southeast')
 subplot(2,1,2);
@@ -175,9 +175,9 @@ ylabel('angular [deg]','FontName','arial','FontSize',16)
 legend('True','N4SID')
 set(legend,'FontName','arial','FontSize',16,'Location','southeast')
 
-% saveas(fig1,'figdata/figure1.pdf')
-% saveas(fig2,'figdata/figure2.pdf')
-% saveas(fig3,'figdata/figure3.pdf')
+saveas(fig1,'figdata/figure1.pdf')
+saveas(fig2,'figdata/figure2.pdf')
+saveas(fig3,'figdata/figure3.pdf')
 
 % %--------------------------------------------------------------------------
 % % ● 状態空間表現の算出 moesp

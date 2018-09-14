@@ -128,31 +128,35 @@ ylabel('value','FontName','arial','FontSize',16)
 
 % MOESP法の結果(2出力)
 fig2 = figure(2);
-iptwindowalign(fig1,'right',fig2,'left');
+set(fig2,'Position',[0 2000 600 700]);
+% iptwindowalign(fig1,'right',fig2,'left');
 subplot(3,1,1);
 hold on
 plot(cl_t,cl_int,'LineWidth',2);
 plot(cl_t,cl_ini,'--','LineWidth',2);
 set(gca,'FontName','arial','FontSize',14)
-xlabel('time [s]','FontName','arial','FontSize',16)
-ylabel('voltage [V]','FontName','arial','FontSize',16)
+xlabel('time [s]','FontName','arial','FontSize',14)
+ylabel('voltage [V]','FontName','arial','FontSize',14)
 legend('True','CL-MOESP')
-set(legend,'FontName','arial','FontSize',16,'Location','southeast')
+set(legend,'FontName','arial','FontSize',12,'Location','southeast')
 subplot(3,1,2);
 hold on
 plot(cl_t,cl_out1t,'LineWidth',2);
 plot(cl_t,cl_out1i,'--','LineWidth',2);
 set(gca,'FontName','arial','FontSize',14)
-xlabel('time [s]','FontName','arial','FontSize',16)
-ylabel('location [m]','FontName','arial','FontSize',16)
+xlabel('time [s]','FontName','arial','FontSize',14)
+ylabel('location [m]','FontName','arial','FontSize',14)
 legend('True','CL-MOESP')
-set(legend,'FontName','arial','FontSize',16,'Location','southeast')
+set(legend,'FontName','arial','FontSize',12,'Location','southeast')
 subplot(3,1,3);
 hold on
 plot(cl_t,cl_out2t,'LineWidth',2);
 plot(cl_t,cl_out2i,'--','LineWidth',2);
 set(gca,'FontName','arial','FontSize',14)
-xlabel('time [s]','FontName','arial','FontSize',16)
-ylabel('angular [deg]','FontName','arial','FontSize',16)
+xlabel('time [s]','FontName','arial','FontSize',14)
+ylabel('angular [deg]','FontName','arial','FontSize',14)
 legend('True','CL-MOESP')
-set(legend,'FontName','arial','FontSize',16,'Location','southeast')
+set(legend,'FontName','arial','FontSize',12,'Location','southeast')
+
+% saveas(fig1,'figdata/figure1.pdf')
+% saveas(fig2,'figdata/figure2.pdf')
