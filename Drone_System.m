@@ -75,8 +75,8 @@ for i = 1:numel(u)  % 信号を作成
     end
 end
 u_in = timeseries(u_data, t_data, 'name', 'Position');  % 時系列作成
-sim('block_nonlinear',s_t)
-sim('block_ss',s_t)
+sim('block/drone_nonlinear',s_t)
+sim('block/block_ss',s_t)
 
 
 
@@ -105,7 +105,7 @@ cP_est = d2c(dP_est,'zoh');
 %FIT算出
 clear num den;
 [num, den] = tfdata(cP_est);
-sim('block_nonlinear_compare',s_t);
+sim('block/drone_nonlinear_compare',s_t);
 
 clear y yh ya;
 y = Cdata.data(:, 7);
@@ -134,7 +134,7 @@ cP_est = d2c(dP_est,'zoh');
 %FIT算出
 clear num den;
 [num, den] = tfdata(cP_est);
-sim('block_nonlinear_compare',s_t);
+sim('block/drone_nonlinear_compare',s_t);
 
 clear y yh ya;
 y = Cdata.data(:, 7);
