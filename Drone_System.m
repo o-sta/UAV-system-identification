@@ -78,16 +78,10 @@ u_in = timeseries(u_data, t_data, 'name', 'Position');  % 時系列作成
 sim('block/drone_nonlinear',s_t)
 sim('block/block_ss',s_t)
 
-
-
-
 %--------------------------------------------------------------------------
 % ● MOESP,N4SID実行
 %--------------------------------------------------------------------------
 clear A B C D;
-% 連続データ
-% [moA, moB, moC, moD] = mf_moesp(data.data(:,14)', data.data(:,7)', k, n);   %MOESP
-% [n4A, n4B, n4C, n4D] = mf_n4sid(data.data(:,14)', data.data(:,7)', k/2, n); %N4SID
 % 離散データ
 [moA, moB, moC, moD] = mf_moesp(data_D.data(:,14)', data_D.data(:,7)', k, n);   %MOESP
 [n4A, n4B, n4C, n4D] = mf_n4sid(data_D.data(:,14)', data_D.data(:,7)', k/2, n); %N4SID
