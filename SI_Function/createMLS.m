@@ -12,7 +12,7 @@ function [continuous_signal, discrete_signal, ts] = createMLS(number, seeds, min
 % discrete_signal       二値離散時間信号
 % ts                    二値離散時間信号のサンプリング周期
 % number                number段シフトレジスタ（デフォルトは5）
-% seeds                 シード値 seeds mod 2^number を2進数で表したものがレジスタの状態xの初期値になるが、0になったときはランダムにシードが選択される。
+% seeds                 シード値 seeds mod 2^number を2進数で表したものがレジスタの状態xの初期値になるが、0になったときはランダムにシードが選択される
 % min                   二値信号の最小値
 % max                   二値信号の最大値
 % length_of_time        信号全体の時間
@@ -48,14 +48,14 @@ end
 % レジスタの初期値を設定
 if mod(seeds, 2^number) == 0
   while true
-    x = randi([0 1], number, 1)  % レジスタの状態xの初期値をランダムに決定
+    x = randi([0 1], number, 1);  % レジスタの状態xの初期値をランダムに決定
     if ~sum(x)==0                 % レジスタの値が全て0であればやり直し
       break;
     end
   end
 else
   seeds_bin = seeds;
-  x = zeros(number,1)
+  x = zeros(number,1);
   for i = 1:number
     x(i) = mod(seeds_bin,2);
     seeds_bin = idivide(int32(seeds_bin),2);
