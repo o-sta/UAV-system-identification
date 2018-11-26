@@ -1,4 +1,4 @@
-function [continuous_signal, discrete_signal, ts] = createMLS(number, seeds, min_value, max_value, length_of_time, continuous_signal_ts)
+function [continuous_signal, discrete_signal, ts] = mf_createMLS(number, seeds, min_value, max_value, length_of_time, continuous_signal_ts)
 %==========================================================================
 % ◎ createMLS()
 % 二値信号を生成します。
@@ -78,7 +78,7 @@ for i = 1:2^number - 1
 end
 % 連続時間信号に変換
 number_of_signal = round((length_of_time/continuous_signal_ts)/numel(discrete_signal)); % 離散時間信号1個に対応する連続時間信号のデータ数
-continuous_signal_times(:,1) = 0:continuous_signal_ts:continuous_signal_ts*number_of_signal*numel(discrete_signal)-continuous_signal_ts;  % 連続時間信号のタイムスタンプ作成
+continuous_signal_times(:,1) = 0:continuous_signal_ts:continuous_signal_ts*number_of_signal*numel(discrete_signal)-continuous_signal_ts;  % 連続時間信号のタイムスタンプ作成)
 continuous_signal_data = zeros(size(continuous_signal_times));
 for i = 1:numel(discrete_signal)  % 連続時間信号のデータを作成
     for j = (i-1)*number_of_signal+1:i*number_of_signal
@@ -89,6 +89,5 @@ continuous_signal = timeseries(continuous_signal_data, continuous_signal_times, 
 ts = number_of_signal * continuous_signal_ts; % 周期の算出
 % pst = xcorr(continuous_signal_data,continuous_signal_data)
 % plot(pst)
-
 end
 
