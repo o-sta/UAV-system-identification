@@ -42,8 +42,8 @@ D_val = double(D);
 % システム同定に必要なデータを取得します。
 %--------------------------------------------------------------------------
 number_of_input = 4;                    % 入力の数 (ft tx ty tz)
-number_of_output = 8;                   % 出力の数 (x y z phi theta psi)
-number_of_state_variables = 9;          % 状態変数の数
+number_of_output = 8;                   % 出力の数 (z w phi theta psi p q r)
+number_of_state_variables = 8;          % 状態変数の数(9が一番良い)
 number_of_rows_in_data_Matrix = 100;    % データ行列の行数
 continuous_signal_ts = 0.001;           % 連続時間シミュレーションのサンプリング周期
                                         % (M系列連続信号のサンプリング周期)
@@ -91,6 +91,9 @@ output_data = horzcat(data_discrete.data(:, 3),data_discrete.data(:, 6),data_dis
 %--------------------------------------------------------------------------
 % ● データ比較
 %--------------------------------------------------------------------------
+% 時間を変える
+length_of_time = 30;                    % 同定に使用する時間
+end_time = start_time + length_of_time; % 同定終了時間（シミュレーション終了時間）
 % M系列信号を同定時とは違うものにする
 ft_signal = mf_createMLS(MLS_degree, 5, min_value(1), max_value(1), length_of_time, continuous_signal_ts);
 tx_signal = mf_createMLS(MLS_degree, 6, min_value(2), max_value(2), length_of_time, continuous_signal_ts);
@@ -100,6 +103,14 @@ tz_signal = mf_createMLS(MLS_degree, 8, min_value(4), max_value(4), length_of_ti
 estimated_discrete_system = ss(est_d_A, est_d_B, est_d_C, est_d_D, simulation_sampling_ts);
 estimated_continuous_system = d2c(estimated_discrete_system, 'zoh');
 [est_c_A, est_c_B, est_c_C, est_c_D] = ssdata(estimated_continuous_system); % est_c_A : estimated continuous matrix A
+matrix_A = est_c_C * est_c_A * est_c_C^(-1);
+matrix_B = est_c_C * est_c_B;
+matrix_C = est_c_C * est_c_C^(-1);
+matrix_D = est_c_D;
+est_c_A = matrix_A;
+est_c_B = matrix_B;
+est_c_C = matrix_C;
+est_c_D = matrix_D;
 sim('block/drone_nonlinear_full_compare', end_time);
 %data_est = getsampleusingtime(data_est, start_time, end_time);
 
@@ -111,6 +122,18 @@ fit_percent = [0 0 mf_fit(data_est_discrete.Data(:,3), data_est_discrete.Data(:,
 0 0 mf_fit(data_est_discrete.Data(:,6), data_est_discrete.Data(:,36));
 mf_fit(data_est_discrete.Data(:,7), data_est_discrete.Data(:,37)) mf_fit(data_est_discrete.Data(:,8), data_est_discrete.Data(:,38)) mf_fit(data_est_discrete.Data(:,9), data_est_discrete.Data(:,39));
 mf_fit(data_est_discrete.Data(:,10), data_est_discrete.Data(:,40)) mf_fit(data_est_discrete.Data(:,11), data_est_discrete.Data(:,41)) mf_fit(data_est_discrete.Data(:,12), data_est_discrete.Data(:,42));]
+
+%--------------------------------------------------------------------------
+% ● 推定行列の保存
+% 状態をそのまま出力に持っていくと最適レギュレータのゲイン設計上都合が良いため、
+% 行列Cを単位行列にする変換を施してから保存する
+% 推定行列はmatrix_Aの形式で保存する
+%--------------------------------------------------------------------------
+% matrix_A = est_c_C * est_c_A * est_c_C^(-1);
+% matrix_B = est_c_C * est_c_B;
+% matrix_C = est_c_C * est_c_C^(-1);
+% matrix_D = est_c_D;
+save('data/estimated_matrix','matrix_A','matrix_B','matrix_C','matrix_D');
 
 %--------------------------------------------------------------------------
 % ● データのプロット
@@ -241,4 +264,8 @@ plot(data_est.time,data_est.data(:,30),'LineWidth',1.5) % desire_psi 4
 xlabel('time [s]','FontName','arial','FontSize',10)
 ylabel('signal tz [Nm]','FontName','arial','FontSize',10)
 iptwindowalign(fig2,'right',fig3,'left');
+
+% saveas(fig1,'figdata/id2_state','pdf');
+% saveas(fig2,'figdata/id2_input','pdf');
+% saveas(fig3,'figdata/id2_signal','pdf');
 
